@@ -1,0 +1,6 @@
+src/venv/
+/.vscode
+*.csv
+*__pycache__
+models/*
+!.gitkeep

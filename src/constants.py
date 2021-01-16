@@ -9,3 +9,5 @@ SENTENCES_EMBEDDINGS_PATH = f'{PROJECT_PATH}/data/processed/sentences_embeddings
 SPACY_MODEL_NAME = 'en_bert_base_nli_cls_token'
 
 MODEL_PATH = f'{PROJECT_PATH}/models/model.pkl'
+
+N_PREDICTIONS_TO_SHOW = 10

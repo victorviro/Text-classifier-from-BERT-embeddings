@@ -7,15 +7,23 @@ from sklearn.metrics import (roc_auc_score, classification_report,
                              confusion_matrix)
 import spacy_sentence_bert
 
-from constants import DATASET_PATH, SPACY_MODEL_NAME, MODEL_PATH
-from utils import generate_sentences_embeddings
+from constants import (DATASET_PATH, SPACY_MODEL_NAME, MODEL_PATH,
+                       N_PREDICTIONS_TO_SHOW)
+from utils import get_embeddings_of_sentences
 
 
 def evaluate_model():
+    """
+    Load the dataset, get the embeddings for the sentences in the 
+    test dataset, load the model trained and compute evaluation 
+    metrics in the test dataset. Finally, show some predictions done 
+    by the model in the test dataset.
+    """ 
 
-    # Load dataset with the embeddings of the sentences in pandas DataFrame
-    source_df = pd.read_csv(DATASET_PATH)[0:200]
+    # Load dataset in pandas DataFrame
+    source_df = pd.read_csv(DATASET_PATH)
 
+    # Get the sentences and the target variable separately
     texts = list(source_df["text"])
     y = source_df["class"]
 
@@ -25,14 +33,18 @@ def evaluate_model():
                                                     random_state=1)
     print(f'Number of sentences in the test datatet: {len(train_texts)}')
 
+    # Load the spaCy statistical model 
+    print('Loading the spaCy statistical model...')
     nlp = spacy_sentence_bert.load_model(SPACY_MODEL_NAME)
+
     print('Getting embeddings of the sentences in the test datatet')
-    X_test = generate_sentences_embeddings(nlp, test_texts)
+    X_test = get_embeddings_of_sentences(nlp, test_texts)
+    print('Obtained embeddings of the sentences')
 
     # Load the model trained
     with open(MODEL_PATH, 'rb') as f:
         model = pickle.load(f)
-
+    print('Model loaded')
 
     # Get predictions in the test dataset
     y_test_predictions  = model.predict(X_test)
@@ -41,7 +53,7 @@ def evaluate_model():
     y_test_probabilities = model.predict_proba(X_test)
     y_test_probabilities = model.predict_proba(X_test)
     auc = roc_auc_score(y_test, y_test_probabilities[:,1:2], multi_class="ovr")
-    print('Metrics:')
+    print('\nMetrics:')
     print(f'Area under the ROC curve: {auc}')
     classification_metrics = classification_report(y_test, y_test_predictions)
     print(f'Classification metrics:\n{classification_metrics}')
@@ -49,8 +61,8 @@ def evaluate_model():
     print(f'Confusion matrix:\n{c_matrix}')
 
     # Test the model
-    print('Show some predictions in the test dataset')
-    for i in random.choices(range(len(test_texts)), k=10):
+    print(f'\nShow {N_PREDICTIONS_TO_SHOW} predictions in the test dataset')
+    for i in random.choices(range(len(test_texts)), k=N_PREDICTIONS_TO_SHOW):
         print(f'\nText: {test_texts[i]}')
         print(f'Ground truth: {"Sports" if y_test.values[i]==2 else "World"}')
         print(f'Predicted: {"Sports" if y_test_predictions[i]==2 else "World"}')

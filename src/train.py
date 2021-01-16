@@ -6,29 +6,38 @@ from sklearn.linear_model import LogisticRegression
 import spacy_sentence_bert
 
 from constants import DATASET_PATH, SPACY_MODEL_NAME, MODEL_PATH
-from utils import generate_sentences_embeddings
+from utils import get_embeddings_of_sentences
 
 
 def train_model():
+    """
+    Load the dataset, get the embeddings for the sentences in the 
+    training dataset, train the model and save it.
+    """ 
 
-    # Load dataset with the embeddings of the sentences in pandas DataFrame
-    source_df = pd.read_csv(DATASET_PATH)[0:200]
+    # Load dataset in pandas DataFrame
+    source_df = pd.read_csv(DATASET_PATH)
 
+    # Get the sentences and the target variable separately
     texts = list(source_df["text"])
     y = source_df["class"]
 
     # Split the dataset for training and test
     train_texts, test_texts, y_train, y_test = train_test_split(
-                                                    texts, y, test_size=0.30, 
+                                                    texts, y, test_size=0.3, 
                                                     random_state=1)
-    print(f'Number of sentences in the training datatet: {len(train_texts)}')
-    
+    print(f'Number of sentences in the train datatet: {len(train_texts)}')
+
+    # Load the spaCy statistical model 
+    print('Loading the spaCy statistical model...')
     nlp = spacy_sentence_bert.load_model(SPACY_MODEL_NAME)
+
     print('Getting embeddings of the sentences in the training datatet')
-    X_train = generate_sentences_embeddings(nlp, train_texts)
+    X_train = get_embeddings_of_sentences(nlp, train_texts)
+    print('Obtained embeddings of the sentences')
+
     # Define the model
-    model = LogisticRegression(random_state=0, solver='lbfgs',
-                               multi_class='multinomial')
+    model = LogisticRegression(random_state=0, max_iter=1000)
 
     # Train the model
     print('Training the model')

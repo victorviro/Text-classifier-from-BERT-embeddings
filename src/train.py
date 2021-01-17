@@ -6,7 +6,7 @@ from sklearn.linear_model import LogisticRegression
 import spacy_sentence_bert
 
 from constants import DATASET_PATH, SPACY_MODEL_NAME, MODEL_PATH
-from utils import get_embeddings_of_sentences
+from utils import get_sentence_embeddings
 
 
 def train_model():
@@ -20,11 +20,12 @@ def train_model():
 
     # Get the sentences and the target variable separately
     texts = list(source_df["text"])
-    y = source_df["class"]
+    target_variable = source_df["class"]
 
     # Split the dataset for training and test
     train_texts, test_texts, y_train, y_test = train_test_split(
-                                                    texts, y, test_size=0.3, 
+                                                    texts, target_variable,
+                                                    test_size=0.3, 
                                                     random_state=1)
     print(f'Number of sentences in the train datatet: {len(train_texts)}')
 
@@ -33,8 +34,9 @@ def train_model():
     nlp = spacy_sentence_bert.load_model(SPACY_MODEL_NAME)
 
     print('Getting embeddings of the sentences in the training datatet')
-    X_train = get_embeddings_of_sentences(nlp, train_texts)
+    X_train = get_sentence_embeddings(nlp, train_texts)
     print('Obtained embeddings of the sentences')
+    print(f'Lenght of the embeddings: {X_train[0].shape[0]}')
 
     # Define the model
     model = LogisticRegression(random_state=0, max_iter=1000)

@@ -9,7 +9,7 @@ import spacy_sentence_bert
 
 from constants import (DATASET_PATH, SPACY_MODEL_NAME, MODEL_PATH,
                        N_PREDICTIONS_TO_SHOW)
-from utils import get_embeddings_of_sentences
+from utils import get_sentence_embeddings
 
 
 def evaluate_model():
@@ -25,11 +25,12 @@ def evaluate_model():
 
     # Get the sentences and the target variable separately
     texts = list(source_df["text"])
-    y = source_df["class"]
+    target_variable = source_df["class"]
 
     # Split the dataset for training and test
     train_texts, test_texts, y_train, y_test = train_test_split(
-                                                    texts, y, test_size=0.30, 
+                                                    texts, target_variable, 
+                                                    test_size=0.30, 
                                                     random_state=1)
     print(f'Number of sentences in the test datatet: {len(test_texts)}')
 
@@ -38,7 +39,7 @@ def evaluate_model():
     nlp = spacy_sentence_bert.load_model(SPACY_MODEL_NAME)
 
     print('Getting embeddings of the sentences in the test datatet')
-    X_test = get_embeddings_of_sentences(nlp, test_texts)
+    X_test = get_sentence_embeddings(nlp, test_texts)
     print('Obtained embeddings of the sentences')
 
     # Load the model trained
@@ -53,13 +54,13 @@ def evaluate_model():
     classification_metrics = classification_report(y_test, y_test_predictions)
     # Compute the area under the ROC curve
     y_test_probabilities = model.predict_proba(X_test)
-    roc_auc = roc_auc_score(y_test, y_test_probabilities[:,1:2], multi_class="ovr")
+    area_under_curve = roc_auc_score(y_test, y_test_probabilities[:,1:2], multi_class="ovr")
     # Compute the confusion matrix
-    conf_matrix = confusion_matrix(y_test, y_test_predictions, labels=[2,1])
+    error_matrix = confusion_matrix(y_test, y_test_predictions, labels=[2,1])
     print('\nMetrics:')
-    print(f'Area under the ROC curve: {roc_auc}')
+    print(f'Area under the ROC curve: {area_under_curve}')
     print(f'Classification metrics:\n{classification_metrics}')
-    print(f'Confusion matrix:\n{conf_matrix}')
+    print(f'Confusion matrix:\n{error_matrix}')
 
     # Show some predictions in the test dataset
     print(f'\nShow {N_PREDICTIONS_TO_SHOW} predictions in the test dataset')

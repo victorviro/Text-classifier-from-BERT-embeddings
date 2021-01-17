@@ -31,7 +31,7 @@ def evaluate_model():
     train_texts, test_texts, y_train, y_test = train_test_split(
                                                     texts, y, test_size=0.30, 
                                                     random_state=1)
-    print(f'Number of sentences in the test datatet: {len(train_texts)}')
+    print(f'Number of sentences in the test datatet: {len(test_texts)}')
 
     # Load the spaCy statistical model 
     print('Loading the spaCy statistical model...')
@@ -47,25 +47,33 @@ def evaluate_model():
     print('Model loaded')
 
     # Get predictions in the test dataset
-    y_test_predictions  = model.predict(X_test)
-
+    y_test_predictions = model.predict(X_test)
+    
     # Compute metrics to evaluate the model
-    y_test_probabilities = model.predict_proba(X_test)
-    y_test_probabilities = model.predict_proba(X_test)
-    auc = roc_auc_score(y_test, y_test_probabilities[:,1:2], multi_class="ovr")
-    print('\nMetrics:')
-    print(f'Area under the ROC curve: {auc}')
     classification_metrics = classification_report(y_test, y_test_predictions)
+    # Compute the area under the ROC curve
+    y_test_probabilities = model.predict_proba(X_test)
+    roc_auc = roc_auc_score(y_test, y_test_probabilities[:,1:2], multi_class="ovr")
+    # Compute the confusion matrix
+    conf_matrix = confusion_matrix(y_test, y_test_predictions, labels=[2,1])
+    print('\nMetrics:')
+    print(f'Area under the ROC curve: {roc_auc}')
     print(f'Classification metrics:\n{classification_metrics}')
-    c_matrix = confusion_matrix(y_test, y_test_predictions, labels=[2,1])
-    print(f'Confusion matrix:\n{c_matrix}')
+    print(f'Confusion matrix:\n{conf_matrix}')
 
-    # Test the model
+    # Show some predictions in the test dataset
     print(f'\nShow {N_PREDICTIONS_TO_SHOW} predictions in the test dataset')
-    for i in random.choices(range(len(test_texts)), k=N_PREDICTIONS_TO_SHOW):
-        print(f'\nText: {test_texts[i]}')
-        print(f'Ground truth: {"Sports" if y_test.values[i]==2 else "World"}')
-        print(f'Predicted: {"Sports" if y_test_predictions[i]==2 else "World"}')
+
+    for text, ground_truth in random.sample(list(zip(test_texts, y_test.values)), 
+                                            k=N_PREDICTIONS_TO_SHOW):
+        # Get the embedding of the sentence
+        sentence_embedding = nlp(text).vector
+        # Get the value predicted by the model
+        prediction = model.predict([sentence_embedding])[0]
+
+        print(f'\nText: {text}')
+        print(f'Ground truth: {"Sports" if ground_truth==2 else "World"}')
+        print(f'Predicted: {"Sports" if prediction==2 else "World"}')
 
 if __name__ == "__main__":
     evaluate_model()
